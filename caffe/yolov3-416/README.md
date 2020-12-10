@@ -229,6 +229,7 @@ python darknet2caffe-yoloV23.py 3 yolov3.cfg yolov3.weights yolov3.prototxt yolo
 |`scale`|`输入图像的高度和宽度`|
 |`crop`|`裁剪的高度和宽度`|
 |`use_firstconv`|`是否使用到第一层卷积`|
+
 注意：如果使用量化后的模型进行推理时，发现推理结果不对，那么很有可能是量化时的mean和std参数设置的不对。
 
 ## 7.3. YOLOV3网络结构及cfg文件
