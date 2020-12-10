@@ -20,6 +20,7 @@ lspci | grep cabc
 #检测PCIE资源分配是否正常
 lspci -d:270 -vvv
 ```
+
 ## 2.2. 获取资料
 开通FTP账号，使用filezilla登录并下载所需开发资料。
 主要资料有：MLU开发文档，Driver安装包，Docker镜像，数据集，模型。
@@ -33,7 +34,13 @@ Docker安装参见：https://docs.docker.com/engine/install/
 
 ## 2.5. 加载镜像
 ```bash
+#下载easy-deploy-mlu
+git clone https://github.com/CambriconKnight/easy-deploy-mlu.git
+ls -la easy-deploy-mlu
 #加载Docker镜像
+cd ./easy-deploy-mlu/caffe
+#根据docker镜像实际存放路径修改此变量。
+FULLNAME_IMAGES="mlu270_v1.5.0_ubuntu16.04.caffe_v1.0.tar.gz"
 ./load-mlu200-image-ubuntu16.04.caffe.sh ${FULLNAME_IMAGES}
 ```
 
