@@ -4,12 +4,12 @@
 以下表格中内容为依赖项
 |类别|文件|URL|
 |----|-------|-------|
-|驱动|`neuware-mlu270-driver-dkms_4.4.4_all.deb`|`ftp://username@download.cambricon.com:8821/product/MLU270/v1.5.0/driver`|
-|镜像|`mlu270_v1.5.0_ubuntu16.04.caffe_v1.0.tar.gz`|`ftp://username@download.cambricon.com:8821/product/MLU270/v1.5.0/docker-images`|
-|加载镜像|`load-mlu200-image-ubuntu16.04.caffe.sh`|`./load-mlu200-image-ubuntu16.04.caffe.sh`|
-|运行容器|`run-mlu200-docker-ubuntu16.04.caffe.sh`|`./run-mlu200-docker-ubuntu16.04.caffe.sh`|
+|驱动|[neuware-mlu270-driver-dkms_4.4.4_all.deb](ftp://download.cambricon.com:8821/product/MLU270/v1.5.0/driver)|
+|镜像|[mlu270_v1.5.0_ubuntu16.04.caffe_v1.0.tar.gz](ftp://username@download.cambricon.com:8821/product/MLU270/v1.5.0/docker-images)|
+|加载镜像|load-mlu200-image-ubuntu16.04.caffe.sh|
+|运行容器|run-mlu200-docker-ubuntu16.04.caffe.sh|
 
-## Structure
+# Structure
 
 ```bash
 .
@@ -18,7 +18,7 @@
 └── README.md
 ```
 
-## Load
+# Load
 ```bash
 #加载Docker镜像
 ./load-mlu200-image-ubuntu16.04.caffe.sh
@@ -57,7 +57,7 @@ cambricon/scm/dockerfile/mlu270_v1.5.0_ubuntu16.04.caffe     v1.0               
 root@cam-3630:/opt/cambricon#
 ```
 
-## Run
+# Run
 ```bash
 #启动caffe容器
 ./run-mlu200-docker-ubuntu16.04.caffe.sh
@@ -71,7 +71,7 @@ Cambricon-CNPlugin-MLU270.tar.gz  caffe  configure_caffe.sh  env_caffe.sh  run_c
 root@cam-3630:/opt/cambricon#
 ```
 
-## Test
+# Test
 ```bash
 #设置环境变量(该步骤每次进入docker都需要操作)
 source env_caffe.sh
