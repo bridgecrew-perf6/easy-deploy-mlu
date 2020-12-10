@@ -6,7 +6,7 @@ YOLOv3是[YOLO](https://pjreddie.com/darknet/yolo) (You Only Look Once)系列目
 ## 2.1. 加载镜像
 ```bash
 #加载Docker镜像
-./load-mlu200-image-ubuntu16.04.caffe.sh
+./load-mlu200-image-ubuntu16.04.caffe.sh ${FULLNAME_IMAGES}
 ```
 
 ## 2.2. 启动容器

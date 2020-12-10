@@ -21,10 +21,11 @@
 # 3. Load
 ```bash
 #加载Docker镜像
-./load-mlu200-image-ubuntu16.04.caffe.sh
+./load-mlu200-image-ubuntu16.04.caffe.sh ${FULLNAME_IMAGES}
 ```
 ```bash
-cam@cam-3630:/data/test/caffe$ ./load-mlu200-image-ubuntu16.04.caffe.sh
+#加载Docker镜像
+cam@cam-3630:/data/github/easy-deploy-mlu/caffe$ ./load-mlu200-image-ubuntu16.04.caffe.sh /data/ftp/v1.5.0/docker-images/mlu270_v1.5.0_ubuntu16.04.caffe_v1.0.tar.gz
 [sudo] password for cam:
 0
 mlu270_v1.5.0_ubuntu16.04.caffe
@@ -53,8 +54,8 @@ a31dffc45248: Loading layer [==================================================>
 Loaded image: cambricon/scm/dockerfile/mlu270_v1.5.0_ubuntu16.04.caffe:v1.0
 The image information:
 REPOSITORY                                                   TAG                 IMAGE ID            CREATED             SIZE
-cambricon/scm/dockerfile/mlu270_v1.5.0_ubuntu16.04.caffe     v1.0                563cfd55883d        2 months ago        5.2GB
-root@cam-3630:/opt/cambricon#
+cambricon/scm/dockerfile/mlu270_v1.5.0_ubuntu16.04.caffe     v1.0                563cfd55883d        3 months ago        5.2GB
+cam@cam-3630:/data/github/easy-deploy-mlu/caffe$
 ```
 
 # 4. Run
@@ -63,7 +64,7 @@ root@cam-3630:/opt/cambricon#
 ./run-mlu200-docker-ubuntu16.04.caffe.sh
 ```
 ```bash
-cam@cam-3630:/data/test/caffe$ ./run-mlu200-docker-ubuntu16.04.caffe.sh
+cam@cam-3630:/data/github/easy-deploy-mlu/caffe$ ./run-mlu200-docker-ubuntu16.04.caffe.sh
 0
 mlu200_container-ubuntu16.04.caffe-v1.5.0
 root@cam-3630:/opt/cambricon# ls
