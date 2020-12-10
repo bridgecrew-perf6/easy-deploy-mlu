@@ -1,21 +1,49 @@
+<p align="center">
+    <a href="https://github.com/CambriconKnight/easy-deploy-mlu/tree/master/caffe/yolov3-416">
+        <img alt="yolov-logo" src="./res/sayit.jpg" height="140" />
+        <h1 align="center">MLU算法移植教程-YOLOv3</h1>
+    </a>
+</p>
+
 # 1. 概述
-YOLOv3是[YOLO](https://pjreddie.com/darknet/yolo) (You Only Look Once)系列目标检测算法中的第三版，相比之前的算法，尤其是针对小目标，精度有显著提升。下面我们就来看看该算法如何在基于寒武纪MLU加速卡上移植开发。
+YOLOv3是[YOLO](https://pjreddie.com/darknet/yolo) (You Only Look Once)系列目标检测算法中的第三版，相比之前的算法，尤其是针对小目标，精度有显著提升。下面我们就来看看该算法如何在基于寒武纪MLU智能加速卡上移植开发。
 整个移植过程分为环境准备、模型结构转换、模型量化、在线推理和离线推理共五个步骤，以下详细描述整个移植过程。
+相关移植套件参见[easy-deploy-mlu](https://github.com/CambriconKnight/easy-deploy-mlu)。
 
 # 2. 环境准备
-## 2.1. 加载镜像
+准备物理环境 >> 获取开发资料 >> 安装MLU驱动 >> 安装Docker >> 加载镜像 >> 启动容器 >> 更新环境 >> 设置环境变量 >> 准备网络模型
+## 2.1. 物理环境
+准备服务器/PC机 >> 安装MLU卡 >> 检测MLU卡是否识别 >> 检测PCIE资源分配是否正常
+```bash
+#检测MLU卡是否识别
+lspci | grep cabc
+#检测PCIE资源分配是否正常
+lspci -d:270 -vvv
+```
+## 2.2. 获取资料
+开通FTP账号，使用filezilla登录并下载所需开发资料。
+主要资料有：MLU开发文档，Driver安装包，Docker镜像，数据集，模型。
+
+## 2.3. 安装驱动
+参见《寒武纪Linux驱动安装手册-v4.4.4.pdf》
+注：安装驱动前，请先安装MLU板卡，再进行驱动安装。
+
+## 2.4. 安装Docker
+Docker安装参见：https://docs.docker.com/engine/install/
+
+## 2.5. 加载镜像
 ```bash
 #加载Docker镜像
 ./load-mlu200-image-ubuntu16.04.caffe.sh ${FULLNAME_IMAGES}
 ```
 
-## 2.2. 启动容器
+## 2.6. 启动容器
 ```bash
 #启动Docker容器
 ./run-mlu200-docker-ubuntu16.04.caffe.sh
 ```
 
-## 2.3. 更新环境
+## 2.7. 更新环境
 更新环境并安装依赖库
 ```bash
 #注：使用run**.sh进入docker环境。首次进入docker容器需要执行以下命令。
@@ -26,7 +54,7 @@ pip install --upgrade pip
 pip install protobuf
 ```
 
-## 2.4. 设置环境变量
+## 2.8. 设置环境变量
 声明环境变量（该操作每次进入docker都需要进行）
 ```bash
 #1. 修改环境变量(进入docker,位于/opt/cambricon)
@@ -47,8 +75,8 @@ PATH_NETWORK_MODELS="${PATH_NETWORK}/models"
 PATH_NETWORK_MODELS_MLU="${PATH_NETWORK_MODELS}/mlu"
 ```
 
-## 2.5.下载配置文件及模型权重
-以官网下载配置文件及模型权重
+## 2.9. 准备网络模型
+从官网下载配置文件及模型权重
 |Name|URL|
 |----|-------|
 |`Darknet`|https://github.com/pjreddie/darknet|
@@ -56,7 +84,7 @@ PATH_NETWORK_MODELS_MLU="${PATH_NETWORK_MODELS}/mlu"
 |`yolov3.weights`|https://pjreddie.com/media/files/yolov3.weights|
 
 ```bash
-#注：如果是客户自己的网络，则不用再下载。可以直接替换【/home/share/models/yolov3】目录中【yolov3.cfg】、【yolov3.weights】.
+#注：如果是自己的网络，则不用再下载。可以直接替换【${PATH_NETWORK}】目录中【yolov3.cfg】、【yolov3.weights】.
 #1.下载darknet
 cd ${PATH_NETWORK_MODELS}
 git clone https://github.com/pjreddie/darknet.git
@@ -64,7 +92,7 @@ git clone https://github.com/pjreddie/darknet.git
 cp ${PATH_NETWORK_MODELS}/darknet/cfg/yolov3.cfg ${PATH_NETWORK_MODELS}
 #3.下载yolov3.weights
 wget https://pjreddie.com/media/files/yolov3.weights
-#4.回显 yolov3.cfg & yolov3.weights
+#4.回显确认 yolov3.cfg & yolov3.weights
 ls -la ${PATH_NETWORK_MODELS}
 #5.官网默认下载的是608*608，需要修改cfg中【width、height】为416
 mv yolov3.cfg yolov3-416.cfg
@@ -75,13 +103,13 @@ vim yolov3-416.cfg
 YOLOv3没有官方的Caffe网络模型。如果要在Cambricon Caffe 上使用YOLOv3 网络，需要先将[Darknet](https://github.com/pjreddie/darknet) 官方的cfg、weights文件分别转换成Caffe 中对应的prototxt和caffemodel文件，然后手动修改相关层（增加yolo层）信息匹配Cambricon Caffe加速要求（此操作不影响原有YOLOv3训练流程）。相关信息参见《寒武纪Caffe用户手册-v5.3.2.pdf》中11.2.5章节【YoloV3/YoloV3-tiny】说明。
 下面以官网YOLOv3 为示例描述如何进行网络模型转换。
 ```bash
-#1.【yolov3.cfg & yolov3.weights】------>【yolov3.prototxt & yolov3.caffemodel】
+#1.使用工具转换网络模型【yolov3.cfg & yolov3.weights】------>【yolov3.prototxt & yolov3.caffemodel】
 cd ${PATH_NETWORK_MODELS}
 if [ ! -d "mlu" ];then mkdir mlu;fi
 python2 /opt/cambricon/caffe/src/caffe/python/darknet2caffe-yoloV23.py 3 yolov3-416.cfg yolov3.weights ${PATH_NETWORK_MODELS}/mlu/yolov3.prototxt ${PATH_NETWORK_MODELS}/mlu/yolov3.caffemodel
 ls -la ${PATH_NETWORK_MODELS}/mlu
 
-#2.修改yolov3.prototxt: 在yolov3.prototxt中增加yolo层
+#2.手动修改yolov3.prototxt: 在yolov3.prototxt中增加yolo层
 #2.1. 【biases】值确认：如果客户给的yolov3.cfg中，【Anchor】不一致，需要将不一致的内容修改一致。
 #2.2. 【bottom】值确认：可用Netron查看yolov3.prototxt文件，最后的三个输出的convolution层【name】，然后修改到layer里面三个【bottom】值。
 #2.3. 【confidence_threshold】值确认：如果需要看图片的实际画框效果，需要把hold调大，0.4,0.5左右；如果需要看mAP值，把这个hold调小，设成0.001。
@@ -146,16 +174,20 @@ ls -la ${PATH_NETWORK_MODELS_MLU}/yolov3_int8.prototxt
 #    -outputmodel ${PATH_NETWORK_MODELS_MLU}/yolov3_int8.prototxt \
 #    -top_dtype FLOAT16
 ```
+**有关量化：什么是量化？为什么要量化？**
+量化是将float32的模型转换为int8/int16的模型，可以保证计算精度在目标误差范围内的情况下，显著减少模型占用的存储空间和处理带宽。比如int8模型是指将数值以有符号8位整型数据保存，并提供int8定点数的指数position和缩放因子scale，因此int8模型中每个8位整数i表示的实际值为：value=i*2^position/scale。另一方面进行在线推理和生成离线模型时仅支持量化后的模型。
 
 # 5. 在线推理
 Cambricon Caffe 提供利用随机数作为网络输入数据，实现网络在线推理功能验证工具test_forward_online。
 关于在线验证工具的使用方法，参见《寒武纪Caffe用户手册-v5.3.2.pdf》中11.13 章节【在线验证工具】。
-
+以下是基于Cambricon Caffe SDK-Demo 中生成的yolov3_online_multicore 进行在线逐层/融合推理。
 ```bash
 #1、基于SDK-Demo 在线逐层推理
+#/opt/cambricon/caffe/src/caffe/build/examples/yolo_v3/yolov3_online_multicore
 cd ${PATH_NETWORK}/test/yolov3_online_multicore
 /opt/cambricon/caffe/src/caffe/build/examples/yolo_v3/yolov3_online_multicore -model ${PATH_NETWORK_MODELS_MLU}/yolov3_int8.prototxt -weights ${PATH_NETWORK_MODELS_MLU}/yolov3.caffemodel -labels ${PATH_NETWORK}/label_map_coco.txt -images ${PATH_NETWORK}/yolov3_file_list_coco -mcore MLU270 -mmode MLU -preprocess_option 4
 #2、基于SDK-Demo 在线融合推理
+#/opt/cambricon/caffe/src/caffe/build/examples/yolo_v3/yolov3_online_multicore
 cd ${PATH_NETWORK}/test/yolov3_online_multicore
 /opt/cambricon/caffe/src/caffe/build/examples/yolo_v3/yolov3_online_multicore -model ${PATH_NETWORK_MODELS_MLU}/yolov3_int8.prototxt -weights ${PATH_NETWORK_MODELS_MLU}/yolov3.caffemodel -labels ${PATH_NETWORK}/label_map_coco.txt -images ${PATH_NETWORK}/yolov3_file_list_coco -mcore MLU270 -mmode MFUS -preprocess_option 4
 #yolov3_online_multicore参数说明：
@@ -202,6 +234,17 @@ Cambricon Caffe 提供利用随机数作为网络输入数据，实现离线网�
 cd ${PATH_NETWORK}/test/yolov3_offline_multicore
 /opt/cambricon/caffe/src/caffe/build/examples/yolo_v3/yolov3_offline_multicore -offlinemodel ${PATH_NETWORK_MODELS_MLU}/yolov3_1b4c_simple.cambricon -labels ${PATH_NETWORK}/label_map_coco.txt -images ${PATH_NETWORK}/yolov3_file_list_coco -preprocess_option 4
 ```
+推理结果摘选：
+<table>
+    <tr>
+        <td ><center><img alt="yolov3_000000000785.jpg" src="./res/yolov3_000000000785.jpg" height="250" </center></td>
+        <td ><center><img alt="yolov3_000000013348.jpg" src="./res/yolov3_000000013348.jpg" height="250" </center></td>
+    </tr>
+    <tr>
+        <td ><center><img alt="yolov3_000000007108.jpg" src="./res/yolov3_000000007108.jpg" height="250" </center></td>
+        <td ><center><img alt="yolov3_000000018380.jpg" src="./res/yolov3_000000018380.jpg" height="250" </center></td>
+    </tr>
+</table>
 
 # 7. 附录
 ## 7.1. darknet2caffe-yoloV23.py参数说明
