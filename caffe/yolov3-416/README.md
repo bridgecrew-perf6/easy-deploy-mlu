@@ -1,9 +1,21 @@
-# 概述
+# 1. 概述
 YOLOv3是[YOLO](https://pjreddie.com/darknet/yolo) (You Only Look Once)系列目标检测算法中的第三版，相比之前的算法，尤其是针对小目标，精度有显著提升。下面我们就来看看该算法如何在基于寒武纪MLU加速卡上移植开发。
 整个移植过程分为环境准备、模型结构转换、模型量化、在线推理和离线推理共五个步骤，以下详细描述整个移植过程。
 
-# 环境准备
-## 更新环境
+# 2. 环境准备
+## 2.1. 加载镜像
+```bash
+#加载Docker镜像
+./load-mlu200-image-ubuntu16.04.caffe.sh
+```
+
+## 2.2. 启动容器
+```bash
+#启动Docker容器
+./run-mlu200-docker-ubuntu16.04.caffe.sh
+```
+
+## 2.3. 更新环境
 更新环境并安装依赖库
 ```bash
 #注：使用run**.sh进入docker环境。首次进入docker容器需要执行以下命令。
@@ -14,7 +26,7 @@ pip install --upgrade pip
 pip install protobuf
 ```
 
-## 设置环境变量
+## 2.4. 设置环境变量
 声明环境变量（该操作每次进入docker都需要进行）
 ```bash
 #1. 修改环境变量(进入docker,位于/opt/cambricon)
@@ -35,7 +47,7 @@ PATH_NETWORK_MODELS="${PATH_NETWORK}/models"
 PATH_NETWORK_MODELS_MLU="${PATH_NETWORK_MODELS}/mlu"
 ```
 
-## 下载配置文件及模型权重
+## 2.5.下载配置文件及模型权重
 以官网下载配置文件及模型权重
 |Name|URL|
 |----|-------|
@@ -59,7 +71,7 @@ mv yolov3.cfg yolov3-416.cfg
 vim yolov3-416.cfg
 ```
 
-# 模型结构转换
+# 3. 模型结构转换
 YOLOv3没有官方的Caffe网络模型。如果要在Cambricon Caffe 上使用YOLOv3 网络，需要先将[Darknet](https://github.com/pjreddie/darknet) 官方的cfg、weights文件分别转换成Caffe 中对应的prototxt和caffemodel文件，然后手动修改相关层（增加yolo层）信息匹配Cambricon Caffe加速要求（此操作不影响原有YOLOv3训练流程）。相关信息参见《寒武纪Caffe用户手册-v5.3.2.pdf》中11.2.5章节【YoloV3/YoloV3-tiny】说明。
 下面以官网YOLOv3 为示例描述如何进行网络模型转换。
 ```bash
@@ -116,7 +128,7 @@ truth_thresh = 1
 random=1#如果为1，每次迭代图片大小随机从320到608，步长为32，如果为0，每次训练大小与输入大小一致。也就是多尺度训练。
 ```
 
-# 模型量化
+# 4. 模型量化
 Cambricon Caffe 提供generate_quantized_pt 工具帮助我们量化模型。可以将32 位浮点模型量化成int8/int16 模型。
 有关generate_quantized_pt 量化工具的使用信息，参见《寒武纪Caffe用户手册-v5.3.2.pdf》中11.1章节【int8/int16 模型生成工具】说明。
 下面以YOLOV3 为示例描述如何进行模型量化。
@@ -135,7 +147,7 @@ ls -la ${PATH_NETWORK_MODELS_MLU}/yolov3_int8.prototxt
 #    -top_dtype FLOAT16
 ```
 
-# 在线推理
+# 5. 在线推理
 Cambricon Caffe 提供利用随机数作为网络输入数据，实现网络在线推理功能验证工具test_forward_online。
 关于在线验证工具的使用方法，参见《寒武纪Caffe用户手册-v5.3.2.pdf》中11.13 章节【在线验证工具】。
 
@@ -154,8 +166,8 @@ cd ${PATH_NETWORK}/test/yolov3_online_multicore
 #具体参数说明可输入./yolov3_online_multicore --help进行查看
 ```
 
-# 离线推理
-## 生成离线模型
+# 6. 离线推理
+## 6.1. 生成离线模型
 Cambricon Caffe 可以用Caffe 工具生成离线模型 model_name.cambricon，同时也会在终端上打印相应的子网络层信息。
 关于离线模型的使用方法，参见《寒武纪CNRT用户手册-v4.5.1.pdf》和《寒武纪Caffe用户手册-v5.3.2.pdf》中9.4.2 章节【离线执行】。
 下面以YOLOV3 为示例描述如何生成离线模型model_name.cambricon。
@@ -182,7 +194,7 @@ cd ${PATH_NETWORK_MODELS_MLU}
 ls -la *.cambricon
 ```
 
-## 执行离线推理
+## 6.2. 执行离线推理
 Cambricon Caffe 提供利用随机数作为网络输入数据，实现离线网络模型推理功能验证工具test_forward_offline。
 关于在线验证工具的使用方法，参见《寒武纪Caffe用户手册-v5.3.2.pdf》中11.14 章节【离线验证工具】。
 ```bash
@@ -191,8 +203,8 @@ cd ${PATH_NETWORK}/test/yolov3_offline_multicore
 /opt/cambricon/caffe/src/caffe/build/examples/yolo_v3/yolov3_offline_multicore -offlinemodel ${PATH_NETWORK_MODELS_MLU}/yolov3_1b4c_simple.cambricon -labels ${PATH_NETWORK}/label_map_coco.txt -images ${PATH_NETWORK}/yolov3_file_list_coco -preprocess_option 4
 ```
 
-# 附录
-## darknet2caffe-yoloV23.py参数说明
+# 7. 附录
+## 7.1. darknet2caffe-yoloV23.py参数说明
 ```bash
 #/opt/cambricon/caffe/src/caffe/python/darknet2caffe-yoloV23.py
 python darknet2caffe-yoloV23.py 3 yolov3.cfg yolov3.weights yolov3.prototxt yolov3.caffemodel
@@ -205,7 +217,7 @@ python darknet2caffe-yoloV23.py 3 yolov3.cfg yolov3.weights yolov3.prototxt yolo
 |`yolov3.prototxt`|`即将生成的.prototxt 全路径名称`|
 |`yolov3.caffemodel`|`即将生成的.caffemodel 全路径名称`|
 
-## convert_quantized.ini文件中参数说明
+## 7.2. convert_quantized.ini文件中参数说明
 |Parameter|Description|
 |----|-------|
 |`originl_models_path`|`待量化的原始网络 全路径名称`|
@@ -219,7 +231,7 @@ python darknet2caffe-yoloV23.py 3 yolov3.cfg yolov3.weights yolov3.prototxt yolo
 |`use_firstconv`|`是否使用到第一层卷积`|
 注意：如果使用量化后的模型进行推理时，发现推理结果不对，那么很有可能是量化时的mean和std参数设置的不对。
 
-## YOLOV3网络结构及cfg文件
+## 7.3. YOLOV3网络结构及cfg文件
 ```bash
 #cfg文件主要参数说明
 [net]
