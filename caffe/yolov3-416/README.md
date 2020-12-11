@@ -80,9 +80,9 @@ vim env_caffe.sh
 #2. 声明环境变量（该操作每次进入docker都需要进行）
 source env_caffe.sh
 #3、设置以下操作步骤中用到的全局变量（请保证在进行以下各个步骤之前设置）
-PATH_NETWORK="/home/share/yolov3-416"
-PATH_NETWORK_MODELS="${PATH_NETWORK}/models"
-PATH_NETWORK_MODELS_MLU="${PATH_NETWORK_MODELS}/mlu"
+export PATH_NETWORK="/home/share/yolov3-416"
+export PATH_NETWORK_MODELS="${PATH_NETWORK}/models"
+export PATH_NETWORK_MODELS_MLU="${PATH_NETWORK_MODELS}/mlu"
 ```
 
 ## 2.9. 准备网络模型
@@ -171,7 +171,9 @@ Cambricon Caffe 提供generate_quantized_pt 工具帮助我们量化模型。可
 有关generate_quantized_pt 量化工具的使用信息，参见《寒武纪Caffe用户手册-v5.3.2.pdf》中11.1章节【int8/int16 模型生成工具】说明。
 下面以YOLOV3 为示例描述如何进行模型量化。
 ```bash
-#generate_quantized_pt：/opt/cambricon/caffe/tools/generate_quantized_pt
+#1.生成图片列表 yolov3_file_list_coco
+/home/share/tools/getFileList.sh ${PATH_NETWORK}/datasets yolov3_file_list_coco
+#2.generate_quantized_pt：/opt/cambricon/caffe/tools/generate_quantized_pt
 cd ${PATH_NETWORK}
 /opt/cambricon/caffe/tools/generate_quantized_pt -ini_file ${PATH_NETWORK}/yolov3_quantized.ini
 ls -la ${PATH_NETWORK_MODELS_MLU}/yolov3_int8.prototxt
@@ -194,11 +196,15 @@ Cambricon Caffe 提供利用随机数作为网络输入数据，实现网络在�
 ```bash
 #1、基于SDK-Demo 在线逐层推理
 #/opt/cambricon/caffe/src/caffe/build/examples/yolo_v3/yolov3_online_multicore
-cd ${PATH_NETWORK}/test/yolov3_online_multicore
+PATH_TEST_NETWORK=${PATH_NETWORK}/test/yolov3_online_multicore_mlu
+if [ ! -d ${PATH_TEST_NETWORK} ];then mkdir -p ${PATH_TEST_NETWORK};fi
+cd ${PATH_TEST_NETWORK}
 /opt/cambricon/caffe/src/caffe/build/examples/yolo_v3/yolov3_online_multicore -model ${PATH_NETWORK_MODELS_MLU}/yolov3_int8.prototxt -weights ${PATH_NETWORK_MODELS_MLU}/yolov3.caffemodel -labels ${PATH_NETWORK}/label_map_coco.txt -images ${PATH_NETWORK}/yolov3_file_list_coco -mcore MLU270 -mmode MLU -preprocess_option 4
 #2、基于SDK-Demo 在线融合推理
 #/opt/cambricon/caffe/src/caffe/build/examples/yolo_v3/yolov3_online_multicore
-cd ${PATH_NETWORK}/test/yolov3_online_multicore
+PATH_TEST_NETWORK=${PATH_NETWORK}/test/yolov3_online_multicore_mfus
+if [ ! -d ${PATH_TEST_NETWORK} ];then mkdir -p ${PATH_TEST_NETWORK};fi
+cd ${PATH_TEST_NETWORK}
 /opt/cambricon/caffe/src/caffe/build/examples/yolo_v3/yolov3_online_multicore -model ${PATH_NETWORK_MODELS_MLU}/yolov3_int8.prototxt -weights ${PATH_NETWORK_MODELS_MLU}/yolov3.caffemodel -labels ${PATH_NETWORK}/label_map_coco.txt -images ${PATH_NETWORK}/yolov3_file_list_coco -mcore MLU270 -mmode MFUS -preprocess_option 4
 #yolov3_online_multicore参数说明：
 #     labels：coco数据集标签
@@ -219,7 +225,7 @@ Cambricon Caffe 可以用Caffe 工具生成离线模型 model_name.cambricon，�
 cd ${PATH_NETWORK_MODELS_MLU}
 /opt/cambricon/caffe/src/caffe/build/tools/caffe genoff -model yolov3_int8.prototxt \
              -weights yolov3.caffemodel \
-             -mname yolov3_4b4c_simple \
+             -mname yolov3_1b4c_simple \
              -mcore MLU270 \
              -simple_compile 1 \
              -core_number 4 \
@@ -241,7 +247,9 @@ Cambricon Caffe 提供利用随机数作为网络输入数据，实现离线网�
 关于在线验证工具的使用方法，参见《寒武纪Caffe用户手册-v5.3.2.pdf》中11.14 章节【离线验证工具】。
 ```bash
 #基于SDK-Demo 离线推理
-cd ${PATH_NETWORK}/test/yolov3_offline_multicore
+PATH_TEST_NETWORK=${PATH_NETWORK}/test/yolov3_offline_multicore
+if [ ! -d ${PATH_TEST_NETWORK} ];then mkdir -p ${PATH_TEST_NETWORK};fi
+cd ${PATH_TEST_NETWORK}
 /opt/cambricon/caffe/src/caffe/build/examples/yolo_v3/yolov3_offline_multicore -offlinemodel ${PATH_NETWORK_MODELS_MLU}/yolov3_1b4c_simple.cambricon -labels ${PATH_NETWORK}/label_map_coco.txt -images ${PATH_NETWORK}/yolov3_file_list_coco -preprocess_option 4
 ```
 推理结果摘选：
