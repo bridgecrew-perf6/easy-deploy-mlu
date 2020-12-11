@@ -1,6 +1,5 @@
 #!/bin/bash
-#!/bin/bash
-# Download latest models from https://github.com/ultralytics/yolov3/releases
+# Download latest models from https://pjreddie.com/media/files/yolov3.weights
 # Usage:
 #    $ bash download_weights.sh
 
