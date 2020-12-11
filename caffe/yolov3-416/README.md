@@ -37,15 +37,18 @@ Docker安装参见：https://docs.docker.com/engine/install/
 #下载easy-deploy-mlu
 git clone https://github.com/CambriconKnight/easy-deploy-mlu.git
 ls -la easy-deploy-mlu
-#加载Docker镜像
+#进入caffe框架工作目录
 cd ./easy-deploy-mlu/caffe
 #根据docker镜像实际存放路径修改此变量。
 FULLNAME_IMAGES="mlu270_v1.5.0_ubuntu16.04.caffe_v1.0.tar.gz"
+#加载Docker镜像
 ./load-mlu200-image-ubuntu16.04.caffe.sh ${FULLNAME_IMAGES}
 ```
 
 ## 2.6. 启动容器
 ```bash
+#进入caffe框架工作目录
+#cd ./easy-deploy-mlu/caffe
 #启动Docker容器
 ./run-mlu200-docker-ubuntu16.04.caffe.sh
 ```
