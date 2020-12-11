@@ -119,7 +119,7 @@ if [ ! -d "mlu" ];then mkdir mlu;fi
 python2 /opt/cambricon/caffe/src/caffe/python/darknet2caffe-yoloV23.py 3 yolov3-416.cfg yolov3.weights ${PATH_NETWORK_MODELS}/mlu/yolov3.prototxt ${PATH_NETWORK_MODELS}/mlu/yolov3.caffemodel
 ls -la ${PATH_NETWORK_MODELS}/mlu
 
-#2.手动修改yolov3.prototxt: 在yolov3.prototxt中增加yolo层
+#2.手动修改yolov3.prototxt: 在yolov3.prototxt 最后添加后处理层【Yolov3Detection】。
 #2.1. 【biases】值确认：如果客户给的yolov3.cfg中，【Anchor】不一致，需要将不一致的内容修改一致。
 #2.2. 【bottom】值确认：可用Netron查看yolov3.prototxt文件，最后的三个输出的convolution层【name】，然后修改到layer里面三个【bottom】值。
 #2.3. 【confidence_threshold】值确认：如果需要看图片的实际画框效果，需要把hold调大，0.4,0.5左右；如果需要看mAP值，把这个hold调小，设成0.001。
@@ -130,7 +130,7 @@ vim ${PATH_NETWORK_MODELS}/mlu/yolov3.prototxt
 ```
 附录1：yolov3.prototxt中增加的yolo层
 ```bash
-#注：在yolov3.prototxt中增加yolo层，以下是按照官网网络结构修改的：仅修改了三个【bottom】值，其他没有修改。
+#注：在yolov3.prototxt最后添加后处理层【Yolov3Detection】，以下是按照官网网络结构修改的：仅修改了三个【bottom】值，其他没有修改。
 layer {
     bottom: "layer82-conv"
     bottom: "layer94-conv"
